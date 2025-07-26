@@ -21,6 +21,10 @@ A non-exhaustive list of the hardware that has run this port:
 
 The mipi display library should allow for the addition of many more displays with minimal effort, but I can't give support for adding new displays right now, so you're on your own! If you do want to add a display I encourage you to look at the commit diffs and the pull request to get better context on what changed and why.
 
+# Business Card
+
+This code runs on my business card, but if you're looking for the RP2040 business card files they are in the [hardware repo](https://github.com/rsheldiii/doom-keycap-hardware)
+
 # Original description
 
 # RP2040 Doom
