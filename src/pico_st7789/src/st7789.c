@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "hardware/gpio.h"
+#include "pico/stdlib.h"
 
 #include "pico/st7789.h"
 
@@ -18,11 +19,8 @@ static bool st7789_data_mode = false;
 
 static void st7789_cmd(uint8_t cmd, const uint8_t* data, size_t len)
 {
-    if (st7789_cfg.gpio_cs > -1) {
-        spi_set_format(st7789_cfg.spi, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
-    } else {
-        spi_set_format(st7789_cfg.spi, 8, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
-    }
+    // BSP always uses CPOL_1, CPHA_1 mode
+    spi_set_format(st7789_cfg.spi, 8, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
     st7789_data_mode = false;
 
     sleep_us(1);
@@ -82,12 +80,9 @@ void st7789_init(const struct st7789_config* config, uint16_t width, uint16_t he
     st7789_width = width;
     st7789_height = height;
 
-    spi_init(st7789_cfg.spi, 625 * 1000 * 1000);
-    if (st7789_cfg.gpio_cs > -1) {
-        spi_set_format(st7789_cfg.spi, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
-    } else {
-        spi_set_format(st7789_cfg.spi, 8, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
-    }
+    spi_init(st7789_cfg.spi, 80 * 1000 * 1000);
+    // BSP always uses CPOL_1, CPHA_1 mode regardless of CS pin
+    spi_set_format(st7789_cfg.spi, 8, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
 
     gpio_set_function(st7789_cfg.gpio_din, GPIO_FUNC_SPI);
     gpio_set_function(st7789_cfg.gpio_clk, GPIO_FUNC_SPI);
@@ -110,46 +105,65 @@ void st7789_init(const struct st7789_config* config, uint16_t width, uint16_t he
         gpio_put(st7789_cfg.gpio_cs, 1);
     }
     gpio_put(st7789_cfg.gpio_dc, 1);
-    gpio_put(st7789_cfg.gpio_rst, 1);
-    sleep_ms(100);
     
-    // SWRESET (01h): Software Reset
-    st7789_cmd(0x01, NULL, 0);
-    sleep_ms(150);
-
+    // Hardware reset sequence matching BSP
+    gpio_put(st7789_cfg.gpio_rst, 0);
+    sleep_ms(50);
+    gpio_put(st7789_cfg.gpio_rst, 1);
+    sleep_ms(50);
+    
+    // Use BSP initialization sequence that works
+    // DISPON (29h): Display On 
+    st7789_cmd(0x29, NULL, 0);
+    sleep_ms(10);
+    
     // SLPOUT (11h): Sleep Out
     st7789_cmd(0x11, NULL, 0);
-    sleep_ms(50);
-
-    // COLMOD (3Ah): Interface Pixel Format
-    // - RGB interface color format     = 65K of RGB interface
-    // - Control interface color format = 16bit/pixel
-    st7789_cmd(0x3a, (uint8_t[]){ 0x55 }, 1);
     sleep_ms(10);
+    
+    // MADCTL (36h): Memory Data Access Control - BSP uses 0x00
+    st7789_cmd(0x36, (uint8_t[]){ 0x00 }, 1);
 
-    // MADCTL (36h): Memory Data Access Control
-    // - Page Address Order            = Top to Bottom
-    // - Column Address Order          = Left to Right
-    // - Page/Column Order             = Normal Mode
-    // - Line Address Order            = LCD Refresh Top to Bottom
-    // - RGB/BGR Order                 = RGB
-    // - Display Data Latch Data Order = LCD Refresh Left to Right
-    st7789_cmd(0x36, (uint8_t[]){ 0b01100000 }, 1);
-   
-    st7789_caset(0, width);
-    st7789_raset(0, height);
+    // COLMOD (3Ah): Interface Pixel Format - BSP uses 0x05
+    st7789_cmd(0x3A, (uint8_t[]){ 0x05 }, 1);
+
+    // Power and display control registers from BSP
+    st7789_cmd(0xB0, (uint8_t[]){ 0x00, 0xE8 }, 2); // 5 to 6-bit conversion: r0 = r5, b0 = b5
+
+    st7789_cmd(0xB2, (uint8_t[]){ 0x0C, 0x0C, 0x00, 0x33, 0x33 }, 5);
+
+    st7789_cmd(0xB7, (uint8_t[]){ 0x75 }, 1); // VGH=14.97V,VGL=-7.67V
+
+    st7789_cmd(0xBB, (uint8_t[]){ 0x1A }, 1);
+
+    st7789_cmd(0xC0, (uint8_t[]){ 0x2C }, 1);
+
+    st7789_cmd(0xC2, (uint8_t[]){ 0x01, 0xFF }, 2);
+
+    st7789_cmd(0xC3, (uint8_t[]){ 0x13 }, 1);
+
+    st7789_cmd(0xC4, (uint8_t[]){ 0x20 }, 1);
+
+    st7789_cmd(0xC6, (uint8_t[]){ 0x0F }, 1);
+
+    st7789_cmd(0xD0, (uint8_t[]){ 0xA4, 0xA1 }, 2);
+
+    st7789_cmd(0xD6, (uint8_t[]){ 0xA1 }, 1);
+
+    // Gamma correction positive
+    st7789_cmd(0xE0, (uint8_t[]){ 0xD0, 0x0D, 0x14, 0x0D, 0x0D, 0x09, 0x38, 0x44, 0x4E, 0x3A, 0x17, 0x18, 0x2F, 0x30 }, 14);
+
+    // Gamma correction negative  
+    st7789_cmd(0xE1, (uint8_t[]){ 0xD0, 0x09, 0x0F, 0x08, 0x07, 0x14, 0x37, 0x44, 0x4D, 0x38, 0x15, 0x16, 0x2C, 0x2E }, 14);
 
     // INVON (21h): Display Inversion On
     st7789_cmd(0x21, NULL, 0);
-    sleep_ms(10);
-
-    // NORON (13h): Normal Display Mode On
-    st7789_cmd(0x13, NULL, 0);
-    sleep_ms(10);
 
     // DISPON (29h): Display On
     st7789_cmd(0x29, NULL, 0);
-    sleep_ms(10);
+
+    // RAMWR (2Ch): Memory Write - prepare for pixel data
+    st7789_cmd(0x2C, NULL, 0);
 
     gpio_put(st7789_cfg.gpio_bl, 1);
 }
@@ -180,11 +194,8 @@ void st7789_write(const void* data, size_t len)
     if (!st7789_data_mode) {
         st7789_ramwr();
 
-        if (st7789_cfg.gpio_cs > -1) {
-            spi_set_format(st7789_cfg.spi, 16, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
-        } else {
-            spi_set_format(st7789_cfg.spi, 16, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
-        }
+        // BSP always uses CPOL_1, CPHA_1 mode
+        spi_set_format(st7789_cfg.spi, 16, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
 
         st7789_data_mode = true;
     }
