@@ -57,9 +57,9 @@ class SSD1306 {
     spi_inst_t* spi_;
     uint32_t baudrate_;
 
-    uint8_t sclk_pin_;  // spi clock (d0)
     uint8_t mosi_pin_;  // spi tx / master out slave in (d1)
     uint8_t cs_pin_;  // chip select (keep low)
-    uint8_t dc_pin_;  // data command pin (used to differentiate commands vs screen buffer)
+    uint8_t sclk_pin_;  // spi clock (d0)
     uint8_t rst_pin_;  // reset (keep high)
+    uint8_t dc_pin_;  // data command pin (used to differentiate commands vs screen buffer)
 };

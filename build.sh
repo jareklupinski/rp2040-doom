@@ -176,6 +176,8 @@ if [[ "$BUILD_AND_FLASH_ST7789" == "true" ]]; then
 			}				# Check if device is already running and offer to reboot to bootsel
 				if check_running_device; then
 					echo "[build.sh] ✓ Found running RP2040/RP2350 device" >&2
+					# Avoid nonsense message
+					diskutil eject /Volumes/RP2350
 				fi
 				
 				# Try to detect device in bootsel mode
@@ -192,8 +194,6 @@ if [[ "$BUILD_AND_FLASH_ST7789" == "true" ]]; then
 				done
 				
 				echo "[build.sh] ✓ Device found in BOOTSEL mode!" >&2
-				# Avoid nonsense message
-				diskutil eject /Volumes/RP2350
 				echo "[build.sh] Attempting to flash using picotool..." >&2
 				if picotool load "$UF2_FILE" -v; then
 					echo "[build.sh] ✓ Successfully flashed $UF2_FILE" >&2

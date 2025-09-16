@@ -202,10 +202,7 @@ void V_DrawPatchList(const vpatchlist_t *patchlist) {
         int repeat = patchlist[l].entry.repeat;
         int w = vpatch_width(patch);
         int h0 = vpatch_height(patch);
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-        int skip_top;
-#pragma GCC diagnostic pop
+        int skip_top = 0;
         int type = vpatch_type(patch);
         if (patchlist[l].entry.y + h0 > vpatch_clip_bottom) {
             // clipping bottom which is trivial
