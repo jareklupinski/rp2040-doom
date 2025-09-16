@@ -18,6 +18,8 @@ static const struct st7789_config lcd_config = {
     .gpio_dc  = 14,
     .gpio_rst = 15,
     .gpio_bl  = 16,
+    .x_offset = 0,
+    .y_offset = -50,
 };
 
 void st7789_240_135_initScreen(void) {

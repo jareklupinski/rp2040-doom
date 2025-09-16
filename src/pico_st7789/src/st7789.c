@@ -50,6 +50,10 @@ static void st7789_cmd(uint8_t cmd, const uint8_t* data, size_t len)
 
 void st7789_caset(uint16_t xs, uint16_t xe)
 {
+    // Apply display offsets like BSP
+    xs += st7789_cfg.x_offset;
+    xe += st7789_cfg.x_offset;
+    
     uint8_t data[] = {
         xs >> 8,
         xs & 0xff,
@@ -63,6 +67,10 @@ void st7789_caset(uint16_t xs, uint16_t xe)
 
 void st7789_raset(uint16_t ys, uint16_t ye)
 {
+    // Apply display offsets like BSP
+    ys += st7789_cfg.y_offset;
+    ye += st7789_cfg.y_offset;
+    
     uint8_t data[] = {
         ys >> 8,
         ys & 0xff,
@@ -112,58 +120,32 @@ void st7789_init(const struct st7789_config* config, uint16_t width, uint16_t he
     gpio_put(st7789_cfg.gpio_rst, 1);
     sleep_ms(50);
     
-    // Use BSP initialization sequence that works
-    // DISPON (29h): Display On 
-    st7789_cmd(0x29, NULL, 0);
-    sleep_ms(10);
-    
+    // Use original simple initialization sequence with minimal BSP elements
     // SLPOUT (11h): Sleep Out
     st7789_cmd(0x11, NULL, 0);
+    sleep_ms(50);
+
+    // COLMOD (3Ah): Interface Pixel Format
+    st7789_cmd(0x3A, (uint8_t[]){ 0x55 }, 1);
     sleep_ms(10);
-    
-    // MADCTL (36h): Memory Data Access Control - BSP uses 0x00
-    st7789_cmd(0x36, (uint8_t[]){ 0x00 }, 1);
 
-    // COLMOD (3Ah): Interface Pixel Format - BSP uses 0x05
-    st7789_cmd(0x3A, (uint8_t[]){ 0x05 }, 1);
-
-    // Power and display control registers from BSP
-    st7789_cmd(0xB0, (uint8_t[]){ 0x00, 0xE8 }, 2); // 5 to 6-bit conversion: r0 = r5, b0 = b5
-
-    st7789_cmd(0xB2, (uint8_t[]){ 0x0C, 0x0C, 0x00, 0x33, 0x33 }, 5);
-
-    st7789_cmd(0xB7, (uint8_t[]){ 0x75 }, 1); // VGH=14.97V,VGL=-7.67V
-
-    st7789_cmd(0xBB, (uint8_t[]){ 0x1A }, 1);
-
-    st7789_cmd(0xC0, (uint8_t[]){ 0x2C }, 1);
-
-    st7789_cmd(0xC2, (uint8_t[]){ 0x01, 0xFF }, 2);
-
-    st7789_cmd(0xC3, (uint8_t[]){ 0x13 }, 1);
-
-    st7789_cmd(0xC4, (uint8_t[]){ 0x20 }, 1);
-
-    st7789_cmd(0xC6, (uint8_t[]){ 0x0F }, 1);
-
-    st7789_cmd(0xD0, (uint8_t[]){ 0xA4, 0xA1 }, 2);
-
-    st7789_cmd(0xD6, (uint8_t[]){ 0xA1 }, 1);
-
-    // Gamma correction positive
-    st7789_cmd(0xE0, (uint8_t[]){ 0xD0, 0x0D, 0x14, 0x0D, 0x0D, 0x09, 0x38, 0x44, 0x4E, 0x3A, 0x17, 0x18, 0x2F, 0x30 }, 14);
-
-    // Gamma correction negative  
-    st7789_cmd(0xE1, (uint8_t[]){ 0xD0, 0x09, 0x0F, 0x08, 0x07, 0x14, 0x37, 0x44, 0x4D, 0x38, 0x15, 0x16, 0x2C, 0x2E }, 14);
+    // MADCTL (36h): Memory Data Access Control - original value, RGB order
+    st7789_cmd(0x36, (uint8_t[]){ 0x60 }, 1);
+   
+    st7789_caset(0, width);
+    st7789_raset(0, height);
 
     // INVON (21h): Display Inversion On
     st7789_cmd(0x21, NULL, 0);
+    sleep_ms(10);
+
+    // NORON (13h): Normal Display Mode On
+    st7789_cmd(0x13, NULL, 0);
+    sleep_ms(10);
 
     // DISPON (29h): Display On
     st7789_cmd(0x29, NULL, 0);
-
-    // RAMWR (2Ch): Memory Write - prepare for pixel data
-    st7789_cmd(0x2C, NULL, 0);
+    sleep_ms(10);
 
     gpio_put(st7789_cfg.gpio_bl, 1);
 }

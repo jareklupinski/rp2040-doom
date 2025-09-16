@@ -18,6 +18,8 @@ struct st7789_config {
     uint gpio_dc;
     uint gpio_rst;
     uint gpio_bl;
+    uint16_t x_offset;
+    uint16_t y_offset;
 };
 
 void st7789_init(const struct st7789_config* config, uint16_t width, uint16_t height);
