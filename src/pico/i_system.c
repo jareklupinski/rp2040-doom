@@ -23,6 +23,9 @@
 #include "doomtype.h"
 #include "doom/p_saveg.h"
 #endif
+#if USB_SUPPORT
+#include "tusb.h"
+#endif
 extern void I_InputInit();
 
 #include <stdlib.h>
@@ -135,9 +138,9 @@ static byte *AutoAllocMemory(int *size, int default_ram, int min_ram)
         zonemem = malloc(*size);
 #else
 #if PICO_ON_DEVICE
-        // we have set heap size to 0, so __HeapLimit is a good value
-        extern char __HeapLimit;
-        zonemem = (uint8_t *)(((uintptr_t)&__HeapLimit)&~3);
+        // we have set heap size to 0, so __end__ is a good value
+        extern char __end__;
+        zonemem = (uint8_t *)(((uintptr_t)&__end__)&~3);
         *size = ((uint8_t *)SRAM4_BASE) - zonemem;
 #else
 #error use zone for malloc only on device
@@ -479,7 +482,6 @@ void __attribute((noreturn)) I_Quit (void)
         // no idea why the default timeout of 50 ms is NOT working here, hack hack hack away!
         I_GetEventTimeout(1000);
 #if USB_SUPPORT
-        extern void tuh_task();
         tuh_task();
 #endif
 #endif
