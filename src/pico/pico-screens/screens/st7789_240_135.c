@@ -11,13 +11,13 @@
 // };
 
 static const struct st7789_config lcd_config = {
-    .spi      = PICO_DEFAULT_SPI_INSTANCE,
-    .gpio_din = 3,
-    .gpio_clk = 2,
-    .gpio_cs  = 5,
-    .gpio_dc  = 1,
-    .gpio_rst = 0,
-    .gpio_bl  = 22,
+    .spi      = spi1,
+    .gpio_din = 11,
+    .gpio_clk = 10,
+    .gpio_cs  = 13,
+    .gpio_dc  = 14,
+    .gpio_rst = 15,
+    .gpio_bl  = 16,
 };
 
 void st7789_240_135_initScreen(void) {

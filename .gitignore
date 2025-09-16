@@ -61,3 +61,14 @@ GTAGS
 host-build/*
 3rdparty/*
 rp2040-build/*
+arm-toolchain/*
+pico2-build/*
+src/bsp/examples/*
+src/bsp/libraries/lvgl/.github/*
+src/bsp/libraries/lvgl/demos/*
+src/bsp/libraries/lvgl/docs/*
+src/bsp/libraries/lvgl/env_support/*
+src/bsp/libraries/lvgl/examples/*
+src/bsp/libraries/lvgl/src/*
+src/bsp/libraries/lvgl/tests/*
+src/bsp/libraries/lvgl/scripts/*

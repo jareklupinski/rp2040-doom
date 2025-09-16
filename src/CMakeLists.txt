@@ -714,6 +714,9 @@ target_compile_definitions(doom_tiny_usb_LILYGO_TTGO PRIVATE
 add_doom_tiny_screen("ST7789_240_135")
 target_compile_definitions(doom_tiny_usb_ST7789_240_135 PRIVATE
     DOWNSAMPLING_FACTOR_OUT_OF_100=148
+    PICO_AUDIO_I2S_DATA_PIN=4
+    PICO_AUDIO_I2S_CLOCK_PIN_BASE=2
+    PICO_DEFAULT_SPI_INSTANCE=spi0
 )
 
 add_doom_tiny_screen("ST7735_128_128")

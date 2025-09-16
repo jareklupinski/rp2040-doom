@@ -9,7 +9,8 @@
 #include "picoflash.h"
 #include "pico/bootrom.h"
 
-#include "hardware/structs/ssi.h"
+
+// #include "hardware/structs/ssi.h"
 #include "hardware/structs/ioqspi.h"
 
 #define FLASH_BLOCK_ERASE_CMD 0xd8

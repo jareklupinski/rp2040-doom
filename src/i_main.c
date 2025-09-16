@@ -30,6 +30,7 @@
 #include "pico/sem.h"
 #include "pico/multicore.h"
 #if PICO_ON_DEVICE
+#include "hardware/clocks.h"
 #include "hardware/vreg.h"
 #endif
 #endif
