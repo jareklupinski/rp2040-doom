@@ -146,6 +146,13 @@ boolean         lowres_turn;            // low resolution turning for longtics
 boolean         demoplayback; 
 boolean		netdemo;
 byte*		demobuffer;
+
+// Demo timeout tracking to detect stuck demos
+static int      demo_timeout_start = 0;     // Gametic when last movement was detected
+static fixed_t  last_player_x = 0;          // Last recorded player X position
+static fixed_t  last_player_y = 0;          // Last recorded player Y position
+static const int DEMO_TIMEOUT_TICS = 35 * 10; // 10 seconds at 35 FPS
+
 #if !USE_WHD
 byte*		demo_p;
 #else
@@ -1160,7 +1167,43 @@ void G_Ticker (void)
 #endif
 	    ST_Ticker ();
 	AM_Ticker (); 
-	HU_Ticker ();            
+	HU_Ticker ();
+	
+	// Check for demo timeout (stuck demos)
+	if (demoplayback && players[consoleplayer].mo) 
+	{
+	    fixed_t curr_x = players[consoleplayer].mo->xy.x;
+	    fixed_t curr_y = players[consoleplayer].mo->xy.y;
+	    
+	    // Check if player has moved significantly (more than 32 units)
+	    fixed_t dx = abs(curr_x - last_player_x);
+	    fixed_t dy = abs(curr_y - last_player_y);
+	    
+	    if (dx > (32 << FRACBITS) || dy > (32 << FRACBITS)) 
+	    {
+	        // Player moved significantly, reset timeout
+	        demo_timeout_start = gametic;
+	        last_player_x = curr_x;
+	        last_player_y = curr_y;
+	    }
+	    else if (demo_timeout_start > 0 && (gametic - demo_timeout_start) > DEMO_TIMEOUT_TICS)
+	    {
+	        // Demo has been stuck for too long, advance to next demo
+	        printf("Demo timeout detected after %d seconds - advancing to next demo\n", 
+	               (gametic - demo_timeout_start) / 35);
+	        G_CheckDemoStatus();
+	    }
+	    
+	    // Initialize timeout tracking on first tick of demo
+	    if (demo_timeout_start == 0) 
+	    {
+	        demo_timeout_start = gametic;
+	        last_player_x = curr_x;
+	        last_player_y = curr_y;
+	        printf("Starting demo timeout tracking at gametic %d\n", gametic);
+	    }
+	}
+	            
 	break; 
 	 
       case GS_INTERMISSION:
@@ -2554,7 +2597,12 @@ void G_DoPlayDemo (void)
     starttime = I_GetTime (); 
 
     usergame = false; 
-    demoplayback = true; 
+    demoplayback = true;
+    
+    // Reset demo timeout tracking for new demo
+    demo_timeout_start = 0;
+    last_player_x = 0;
+    last_player_y = 0; 
 } 
 
 //
