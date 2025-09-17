@@ -588,6 +588,42 @@ int             demosequence;
 int             pagetic;
 const char                    *pagename;
 
+// Track available demos (DEMO1 through DEMO100)
+int             max_demo_num = 0;
+int             available_demos[100];  // List of available demo numbers
+int             demo_count = 0;        // Total number of available demos
+
+//
+// D_ScanDemos
+// Scan for available demo lumps (DEMO1 through DEMO100)
+//
+static void D_ScanDemos(void)
+{
+    char demolumpname[8];
+    int i;
+    
+    max_demo_num = 0;
+    demo_count = 0;
+    
+    // Clear the available demos list
+    for (i = 0; i < 100; ++i)
+    {
+        available_demos[i] = 0;
+    }
+    
+    // Scan all DEMO1-100 to find which ones exist
+    for (int demo_num = 1; demo_num <= 100; demo_num++) {
+        M_snprintf(demolumpname, sizeof(demolumpname), "DEMO%d", demo_num);
+        int demo_lump_idx = W_CheckNumForName(demolumpname);
+        if (demo_lump_idx >= 0) {
+            // Add it to our available demos list
+            available_demos[demo_count] = demo_num;
+            demo_count++;
+            if (demo_num > max_demo_num) max_demo_num = demo_num;
+        }
+    }
+}
+
 
 //
 // D_PageTicker
@@ -618,91 +654,77 @@ void D_PageDrawer (void)
 //
 void D_AdvanceDemo (void)
 {
-    advancedemo = true;
+    printf("D_AdvanceDemo called - setting advancedemo flag\n");
+    advancedemo = true; 
 }
-
-
 //
 // This cycles through the demo sequences.
-// FIXME - version dependend demo numbers?
+// Now supports DEMO1 through DEMO100 dynamically
 //
 void D_DoAdvanceDemo (void)
 {
+    static int current_demo = 1;  // Current demo number (1-based)
+    static int demosequence = 0;  // Demo sequence counter (missing declaration)
+    static boolean demos_scanned = false;  // Track if we've scanned for demos
+    char demolumpname[8];
+    
+    printf("D_DoAdvanceDemo called - processing demo advancement\n");
+    
     players[consoleplayer].playerstate = PST_LIVE;  // not reborn
     advancedemo = false;
     usergame = false;               // no save / end game here
     paused = false;
     gameaction = ga_nothing;
 
-#if !DOOM_TINY
-    // The Ultimate Doom executable changed the demo sequence to add
-    // a DEMO4 demo.  Final Doom was based on Ultimate, so also
-    // includes this change; however, the Final Doom IWADs do not
-    // include a DEMO4 lump, so the game bombs out with an error
-    // when it reaches this point in the demo sequence.
-
-    // However! There is an alternate version of Final Doom that
-    // includes a fixed executable.
-
-    if (gameversion == exe_ultimate || gameversion == exe_final)
-#else
-    // dont want to preserver above^
-    if (gameversion == exe_ultimate)
-#endif
-      demosequence = (demosequence+1)%7;
-    else
-      demosequence = (demosequence+1)%6;
-    
-    switch (demosequence)
+    // Scan for demos on first run (when actually needed)
+    if (!demos_scanned)
     {
-      case 0:
-	if ( gamemode == commercial )
-	    pagetic = TICRATE * 11;
-	else
-	    pagetic = 170;
-	gamestate = GS_DEMOSCREEN;
-	pagename = DEH_String("TITLEPIC");
-	if ( gamemode == commercial )
-	  S_StartMusic(mus_dm2ttl);
-	else
-	  S_StartMusic (mus_intro);
-	break;
-      case 1:
-	G_DeferedPlayDemo(DEH_String("demo1"));
-	break;
-      case 2:
-	pagetic = 200;
-	gamestate = GS_DEMOSCREEN;
-	pagename = DEH_String("CREDIT");
-	break;
-      case 3:
-	G_DeferedPlayDemo(DEH_String("demo2"));
-	break;
-      case 4:
-	gamestate = GS_DEMOSCREEN;
-	if ( gamemode == commercial)
-	{
-	    pagetic = TICRATE * 11;
-	    pagename = DEH_String("TITLEPIC");
-	    S_StartMusic(mus_dm2ttl);
-	}
-	else
-	{
-	    pagetic = 200;
+        D_ScanDemos();
+        demos_scanned = true;
+    }
 
-	    if (gameversion >= exe_ultimate)
-	      pagename = DEH_String("CREDIT");
-	    else
-	      pagename = DEH_String("HELP2");
-	}
-	break;
-      case 5:
-	G_DeferedPlayDemo(DEH_String("demo3"));
-	break;
-        // THE DEFINITIVE DOOM Special Edition demo
-      case 6:
-	G_DeferedPlayDemo(DEH_String("demo4"));
-	break;
+    if (demo_count == 0)
+    {
+        // No demos available, just show title screen
+        gamestate = GS_DEMOSCREEN;
+        pagename = DEH_String("TITLEPIC");
+        pagetic = TICRATE * 11;
+        if ( gamemode == commercial )
+          S_StartMusic(mus_dm2ttl);
+        else
+          S_StartMusic (mus_intro);
+        return;
+    }
+
+    // Cycle through demos: even demosequence = title screen, odd = demo playback
+    demosequence = (demosequence + 1) % (demo_count * 2);
+    
+    if (demosequence % 2 == 0)
+    {
+        // Even sequence: Show title screen
+        gamestate = GS_DEMOSCREEN;
+        pagename = DEH_String("TITLEPIC");
+        if ( gamemode == commercial )
+        {
+            pagetic = TICRATE * 11;
+            S_StartMusic(mus_dm2ttl);
+        }
+        else
+        {
+            pagetic = 170;
+            S_StartMusic (mus_intro);
+        }
+    }
+    else
+    {
+        // Odd sequence: Play demo using available_demos array
+        int demo_index = (demosequence / 2) % demo_count;  // Index into available_demos array
+        int demo_number = available_demos[demo_index];     // Actual demo number to play
+        
+        M_snprintf(demolumpname, sizeof(demolumpname), "DEMO%i", demo_number);
+        printf("Playing demo: %s (sequence %d, demo_index %d/%d, demo_number %d)\n", 
+               demolumpname, demosequence, demo_index, demo_count-1, demo_number);
+        G_DeferedPlayDemo(demolumpname);
     }
 
     // The Doom 3: BFG Edition version of doom2.wad does not have a
@@ -1149,10 +1171,10 @@ static void InitGameVersion(void)
             // original
             gameversion = exe_doom_1_9;
 
-            // Detect version from demo lump
-            for (i = 1; i <= 3; ++i)
+            // Detect version from demo lump (check first 10 demos)
+            for (i = 1; i <= 10; ++i)
             {
-                M_snprintf(demolumpname, 6, "demo%i", i);
+                M_snprintf(demolumpname, 8, "demo%i", i);
                 if (W_CheckNumForName(demolumpname) > 0)
                 {
                     demolump = W_CacheLumpName(demolumpname, PU_STATIC);

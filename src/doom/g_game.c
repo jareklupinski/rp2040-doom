@@ -2611,7 +2611,9 @@ boolean G_CheckDemoStatus (void)
 
     if (demoplayback)
     { 
-        W_ReleaseLumpName(defdemoname);
+        printf("Demo finished, cleaning up and advancing to next demo...\n");
+        // W_ReleaseLumpName(defdemoname);  // FIXME: This call causes system hang
+        printf("Skipping lump release to avoid hang\n");
 	demoplayback = false; 
 	netdemo = false;
 #if !NO_USE_NET
@@ -2625,9 +2627,15 @@ boolean G_CheckDemoStatus (void)
 	consoleplayer = 0;
         
         if (singledemo) 
+        {
+            printf("Single demo mode - quitting\n");
             I_Quit (); 
+        }
         else 
+        {
+            printf("Calling D_AdvanceDemo to start next demo\n");
             D_AdvanceDemo (); 
+        }
 
 	return true; 
     }

@@ -72,3 +72,5 @@ src/bsp/libraries/lvgl/examples/*
 src/bsp/libraries/lvgl/src/*
 src/bsp/libraries/lvgl/tests/*
 src/bsp/libraries/lvgl/scripts/*
+demos/*
+whd_gen

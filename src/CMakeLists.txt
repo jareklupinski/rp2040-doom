@@ -651,7 +651,7 @@ endif()
 if (PICO_SDK)
     add_library(tiny_settings INTERFACE)
     target_compile_definitions(tiny_settings INTERFACE
-        WHD_SUPER_TINY=1
+        WHD_SUPER_TINY=0
         DEMO1_ONLY=1
         NO_USE_FINALE_CAST=1
         NO_USE_FINALE_BUNNY=1

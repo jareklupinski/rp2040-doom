@@ -184,6 +184,17 @@ static std::vector<std::string> named_lumps = {
         "RROCK19",
         "E4M1",
         "E3M1",
+        // Demo lumps that need to be named
+        "DEMO1", "DEMO2", "DEMO3", "DEMO4", "DEMO5", "DEMO6", "DEMO7", "DEMO8", "DEMO9", "DEMO10",
+        "DEMO11", "DEMO12", "DEMO13", "DEMO14", "DEMO15", "DEMO16", "DEMO17", "DEMO18", "DEMO19", "DEMO20",
+        "DEMO21", "DEMO22", "DEMO23", "DEMO24", "DEMO25", "DEMO26", "DEMO27", "DEMO28", "DEMO29", "DEMO30",
+        "DEMO31", "DEMO32", "DEMO33", "DEMO34", "DEMO35", "DEMO36", "DEMO37", "DEMO38", "DEMO39", "DEMO40",
+        "DEMO41", "DEMO42", "DEMO43", "DEMO44", "DEMO45", "DEMO46", "DEMO47", "DEMO48", "DEMO49", "DEMO50",
+        "DEMO51", "DEMO52", "DEMO53", "DEMO54", "DEMO55", "DEMO56", "DEMO57", "DEMO58", "DEMO59", "DEMO60",
+        "DEMO61", "DEMO62", "DEMO63", "DEMO64", "DEMO65", "DEMO66", "DEMO67", "DEMO68", "DEMO69", "DEMO70",
+        "DEMO71", "DEMO72", "DEMO73", "DEMO74", "DEMO75", "DEMO76", "DEMO77", "DEMO78", "DEMO79", "DEMO80",
+        "DEMO81", "DEMO82", "DEMO83", "DEMO84", "DEMO85", "DEMO86", "DEMO87", "DEMO88", "DEMO89", "DEMO90",
+        "DEMO91", "DEMO92", "DEMO93", "DEMO94", "DEMO95", "DEMO96", "DEMO97", "DEMO98", "DEMO99", "DEMO100",
 };
 
 // large menu graphics with lots of transparency, ecnodedd as runs
@@ -5135,10 +5146,15 @@ int main(int argc, const char **argv) {
             wad.update_lump(tmp);
         }
         lump demo;
-        if (wad.get_lump("demo1", demo)) convert_demo(wad, demo);
-        if (wad.get_lump("demo2", demo)) convert_demo(wad, demo);
-        if (wad.get_lump("demo3", demo)) convert_demo(wad, demo);
-        if (wad.get_lump("demo4", demo)) convert_demo(wad, demo);
+        // Process all demo lumps DEMO1-DEMO30
+        for (int i = 1; i <= 30; i++) {
+            char demo_name[16];
+            snprintf(demo_name, sizeof(demo_name), "DEMO%d", i);
+            if (wad.get_lump(demo_name, demo)) {
+                printf("Processing %s\n", demo_name);
+                convert_demo(wad, demo);
+            }
+        }
         int total = 0;
         for (const auto &e : wad.get_lumps()) {
             if (touched.find(e.first) == touched.end()) {
