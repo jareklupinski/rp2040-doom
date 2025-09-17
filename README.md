@@ -1,3 +1,9 @@
+# RP2040 Doom, now for the Waveshare Touch LCD 2.8!
+
+I got this board to easily work on the code without having to wire up the display or audio myself. Happily was able to hook up the display SPI and audio I2S to the existing code using the bsp examples without much trouble. Complete 320x200 display resolution and full speed sound right out of the box!
+
+I also added some code to play a loop of up to 30 Demo Recordings in LMP format. I downloaded a bunch of demos from speedrunning websites and inserted them into my Steam copy of DOOM.WAD using Slade, then moved the existing 4 demos down the list to make one contiguous block of 30 demo lumps. This should play in a loop; currently looking for an interesting enclosure.
+
 # RP2040 Doom, now for I2C and SPI displays!
 
 ![](https://i.imgur.com/QxaZdQg.jpeg)
