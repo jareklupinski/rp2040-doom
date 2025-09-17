@@ -176,8 +176,6 @@ if [[ "$BUILD_AND_FLASH_ST7789" == "true" ]]; then
 			}				# Check if device is already running and offer to reboot to bootsel
 				if check_running_device; then
 					echo "[build.sh] ✓ Found running RP2040/RP2350 device" >&2
-					# Avoid nonsense message
-					diskutil eject /Volumes/RP2350
 				fi
 				
 				# Try to detect device in bootsel mode
@@ -198,8 +196,8 @@ if [[ "$BUILD_AND_FLASH_ST7789" == "true" ]]; then
 				if picotool load "$UF2_FILE" -v; then
 					echo "[build.sh] ✓ Successfully flashed $UF2_FILE" >&2
 					
-					# # Also flash the WHX game data file
-					# WHX_FILE="../doom1.whx"
+					# Also flash the WHX game data file
+					# WHX_FILE="../doom.whd"
 					# if [[ -f "$WHX_FILE" ]]; then
 					# 	echo "[build.sh] Flashing WHX game data file..." >&2
 					# 	if picotool load -t bin "$WHX_FILE" -o 0x10042000 -v; then
